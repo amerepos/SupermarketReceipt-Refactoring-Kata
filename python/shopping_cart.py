@@ -1,68 +1,100 @@
-import math
+from typing import Dict
 
-from model_objects import ProductQuantity, SpecialOfferType, Discount
+from discount_calculator import DiscountCalculator
+from catalog import SupermarketCatalog
+from model_objects import ProductQuantity, Product, Offer
+from receipt import Receipt
 
 
 class ShoppingCart:
+    """
+    Represents a shopping cart that can hold products and calculate discounts.
+    """
 
     def __init__(self):
-        self._items = []
-        self._product_quantities = {}
+        """
+        Initializes a new instance of the ShoppingCart class.
+        """
+        # Initialize an empty list to store product quantities
+        self._items: list[ProductQuantity] = []
+        # Initialize an empty dictionary to store product quantities
+        self._product_quantities: Dict[Product, float] = {}
 
     @property
-    def items(self):
+    def items(self) -> list[ProductQuantity]:
+        """
+        Gets the list of product quantities in the shopping cart.
+
+        Returns:
+            list[ProductQuantity]: The list of product quantities.
+        """
         return self._items
 
-    def add_item(self, product):
+    def add_item(self, product: Product) -> None:
+        """
+        Adds a product to the shopping cart with a quantity of 1.
+
+        Args:
+            product (Product): The product to add.
+        """
         self.add_item_quantity(product, 1.0)
 
     @property
-    def product_quantities(self):
+    def product_quantities(self) -> Dict[Product, float]:
+        """
+        Gets the dictionary of product quantities in the shopping cart.
+
+        Returns:
+            Dict[Product, float]: The dictionary of product quantities.
+        """
         return self._product_quantities
 
-    def add_item_quantity(self, product, quantity):
+    def add_item_quantity(self, product: Product, quantity: float) -> None:
+        """
+        Adds a product to the shopping cart with a specified quantity.
+
+        Args:
+            product (Product): The product to add.
+            quantity (float): The quantity of the product.
+        """
+        # Create a new ProductQuantity instance and add it to the list
         self._items.append(ProductQuantity(product, quantity))
-        if product in self._product_quantities.keys():
-            self._product_quantities[product] = self._product_quantities[product] + quantity
-        else:
-            self._product_quantities[product] = quantity
+        # Get the existing quantity or 0 if it doesn't exist and add the quantity
+        self._product_quantities[product] = (
+            self._product_quantities.get(product, 0) + quantity
+        )
 
-    def handle_offers(self, receipt, offers, catalog):
-        for p in self._product_quantities.keys():
-            quantity = self._product_quantities[p]
-            if p in offers.keys():
-                offer = offers[p]
-                unit_price = catalog.unit_price(p)
-                quantity_as_int = int(quantity)
-                discount = None
-                x = 1
-                if offer.offer_type == SpecialOfferType.THREE_FOR_TWO:
-                    x = 3
+    def handle_offers(
+        self,
+        receipt: Receipt,
+        offers: Dict[Product, Offer],
+        catalog: SupermarketCatalog,
+    ) -> None:
+        """
+        Applies offers to the products in the shopping cart and updates the receipt.
 
-                elif offer.offer_type == SpecialOfferType.TWO_FOR_AMOUNT:
-                    x = 2
-                    if quantity_as_int >= 2:
-                        total = offer.argument * (quantity_as_int / x) + quantity_as_int % 2 * unit_price
-                        discount_n = unit_price * quantity - total
-                        discount = Discount(p, "2 for " + str(offer.argument), -discount_n)
+        Args:
+            receipt (Receipt): The receipt to update.
+            offers (Dict[Product, Offer]): The offers to apply.
+            catalog (SupermarketCatalog): The catalog of products and prices.
+        """
+        # Iterate over the products and quantities in the shopping cart
+        for product, quantity in self._product_quantities.items():
+            # Check if the product has an offer
+            if product not in offers:
+                continue  # Skip if the product is not in offers
 
-                if offer.offer_type == SpecialOfferType.FIVE_FOR_AMOUNT:
-                    x = 5
+            # Get the offer for the product
+            offer = offers[product]
+            # Get the unit price of the product from the catalog
+            unit_price = catalog.unit_price(product)
 
-                number_of_x = math.floor(quantity_as_int / x)
-                if offer.offer_type == SpecialOfferType.THREE_FOR_TWO and quantity_as_int > 2:
-                    discount_amount = quantity * unit_price - (
-                                (number_of_x * 2 * unit_price) + quantity_as_int % 3 * unit_price)
-                    discount = Discount(p, "3 for 2", -discount_amount)
+            # Create a discount calculator and calculate the discount
+            discount_calculator = DiscountCalculator(
+                product, quantity, unit_price, offer
+            )
+            discount = discount_calculator.calculate_discount()
 
-                if offer.offer_type == SpecialOfferType.TEN_PERCENT_DISCOUNT:
-                    discount = Discount(p, str(offer.argument) + "% off",
-                                        -quantity * unit_price * offer.argument / 100.0)
-
-                if offer.offer_type == SpecialOfferType.FIVE_FOR_AMOUNT and quantity_as_int >= 5:
-                    discount_total = unit_price * quantity - (
-                                offer.argument * number_of_x + quantity_as_int % 5 * unit_price)
-                    discount = Discount(p, str(x) + " for " + str(offer.argument), -discount_total)
-
-                if discount:
-                    receipt.add_discount(discount)
+            # Add the discount to the receipt if it exists
+            if discount:
+                receipt.add_discount(discount)
