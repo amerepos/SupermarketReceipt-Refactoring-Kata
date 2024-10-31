@@ -15,13 +15,13 @@ jobs:
 
     steps:
       - name: Check out the code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Set up JDK 11  # Use the appropriate Java version for your project
-        uses: actions/setup-java@v3
+      - name: Set up JDK
+        uses: actions/setup-java@v4
         with:
-          java-version: '11'
-          distribution: 'temurin'
+          java-version: '21'
+          distribution: 'zulu'
 
       - name: Cache SonarCloud packages
         uses: actions/cache@v3
