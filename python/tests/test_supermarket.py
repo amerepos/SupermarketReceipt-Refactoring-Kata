@@ -1,3 +1,4 @@
+import math
 from enum import Enum
 from unittest.mock import Mock
 
@@ -132,16 +133,16 @@ class TestReceiptItem:
         item = ReceiptItem(apple, 2, 1.5, 3.0)
         assert item.product == apple
         assert item.quantity == 2
-        assert item.price == 1.5
-        assert item.total_price == 3.0
+        assert math.isclose(item.price, 1.5, rel_tol=1e-9)
+        assert math.isclose(item.total_price, 3.0, rel_tol=1e-9)
 
     # Accessing attributes product, quantity, price, and total_price after initialization
     def test_access_attributes_after_initialization(self, setup_item):
         item = setup_item
         assert item.product == apple
         assert item.quantity == 2
-        assert item.price == 1.5
-        assert item.total_price == 3.0
+        assert math.isclose(item.price, 1.5, rel_tol=1e-9)
+        assert math.isclose(item.total_price, 3.0, rel_tol=1e-9)
 
     # Initializing multiple ReceiptItems and verifying their independence
     def test_multiple_receipt_items_independence(self):
@@ -155,13 +156,13 @@ class TestReceiptItem:
     def test_initialize_with_zero_quantity(self):
         item = ReceiptItem(watermelon, 0, 3.0, 0.0)
         assert item.quantity == 0
-        assert item.total_price == 0.0
+        assert math.isclose(item.total_price, 0.0, rel_tol=1e-9)
 
-    # Initializing ReceiptItem with negative price
+        # Initializing ReceiptItem with negative price
     def test_initialize_with_negative_price(self):
         item = ReceiptItem(pineapple, 1, -1.0, -1.0)
-        assert item.price == -1.0
-        assert item.total_price == -1.0
+        assert math.isclose(item.price, -1.0, rel_tol=1e-9)
+        assert math.isclose(item.total_price, -1.0, rel_tol=1e-9)
 
     # Initializing ReceiptItem with total_price not matching quantity * price
     def test_total_price_mismatch(self):
@@ -183,8 +184,8 @@ class TestReceiptItem:
         total_price = large_quantity * large_price
         item = ReceiptItem(diamond, large_quantity, large_price, total_price)
         assert item.quantity == large_quantity
-        assert item.price == large_price
-        assert item.total_price == total_price
+        assert math.isclose(item.price, large_price, rel_tol=1e-9)
+        assert math.isclose(item.total_price, total_price, rel_tol=1e-9)
 
 
 @pytest.mark.usefixtures("setup_supermarket")
@@ -213,44 +214,44 @@ class TestSupermarket:
 
     def test_an_empty_shopping_cart_should_cost_nothing(self):
         receipt = self.teller.checks_out_articles_from(self.the_cart)
-        assert receipt.total_price() == 0.0
+        assert math.isclose(receipt.total_price(), 0.0, rel_tol=1e-9)
         assert len(receipt.items) == 0
 
     def test_one_normal_item(self):
         self.the_cart.add_item(self.toothbrush)
         receipt = self.teller.checks_out_articles_from(self.the_cart)
-        assert receipt.total_price() == 0.99
+        assert math.isclose(receipt.total_price(), 0.99, rel_tol=1e-9)
         assert len(receipt.items) == 1
 
     def test_two_normal_items(self):
         self.the_cart.add_item(self.toothbrush)
         self.the_cart.add_item(self.rice)
         receipt = self.teller.checks_out_articles_from(self.the_cart)
-        assert receipt.total_price() == 3.98
+        assert math.isclose(receipt.total_price(), 3.98, rel_tol=1e-9)
         assert len(receipt.items) == 2
 
     def test_buy_two_get_one_free(self):
         self.the_cart.add_item_quantity(self.toothbrush, 2)
         self.teller.add_special_offer(OfferType.THREE_FOR_TWO, self.toothbrush, 0.99)
         receipt = self.teller.checks_out_articles_from(self.the_cart)
-        assert receipt.total_price() == 1.98
+        assert math.isclose(receipt.total_price(), 1.98, rel_tol=1e-9)
 
     def test_buy_five_get_one_free(self):
         self.the_cart.add_item_quantity(self.toothbrush, 5)
         self.teller.add_special_offer(OfferType.THREE_FOR_TWO, self.toothbrush, 0.99)
         receipt = self.teller.checks_out_articles_from(self.the_cart)
-        assert receipt.total_price() == 3.96
+        assert math.isclose(receipt.total_price(), 3.96, rel_tol=1e-9)
 
     def test_loose_weight_product(self):
         self.the_cart.add_item_quantity(self.apples, 0.5)
         receipt = self.teller.checks_out_articles_from(self.the_cart)
-        assert receipt.total_price() == 0.99
+        assert math.isclose(receipt.total_price(), 0.99, rel_tol=1e-9)
 
     def test_percent_discount(self):
         self.the_cart.add_item(self.rice)
         self.teller.add_special_offer(OfferType.TEN_PERCENT_DISCOUNT, self.rice, 10.0)
         receipt = self.teller.checks_out_articles_from(self.the_cart)
-        assert receipt.total_price() == 2.69
+        assert math.isclose(receipt.total_price(), 2.69, rel_tol=1e-9)
 
     def test_x_for_y_discount(self):
         self.the_cart.add_item_quantity(self.cherry_tomatoes, 2)
@@ -258,31 +259,31 @@ class TestSupermarket:
             OfferType.TWO_FOR_AMOUNT, self.cherry_tomatoes, 0.99
         )
         receipt = self.teller.checks_out_articles_from(self.the_cart)
-        assert receipt.total_price() == 0.99
+        assert math.isclose(receipt.total_price(), 0.99, rel_tol=1e-9)
 
     def test_five_for_y_discount(self):
         self.the_cart.add_item_quantity(self.apples, 5)
         self.teller.add_special_offer(OfferType.FIVE_FOR_AMOUNT, self.apples, 5.99)
         receipt = self.teller.checks_out_articles_from(self.the_cart)
-        assert receipt.total_price() == 5.99
+        assert math.isclose(receipt.total_price(), 5.99, rel_tol=1e-9)
 
     def test_five_for_y_discount_with_six(self):
         self.the_cart.add_item_quantity(self.apples, 6)
         self.teller.add_special_offer(OfferType.FIVE_FOR_AMOUNT, self.apples, 5.99)
         receipt = self.teller.checks_out_articles_from(self.the_cart)
-        assert receipt.total_price() == 7.98
+        assert math.isclose(receipt.total_price(), 7.98, rel_tol=1e-9)
 
     def test_five_for_y_discount_with_sixteen(self):
         self.the_cart.add_item_quantity(self.apples, 16)
         self.teller.add_special_offer(OfferType.FIVE_FOR_AMOUNT, self.apples, 7.99)
         receipt = self.teller.checks_out_articles_from(self.the_cart)
-        assert receipt.total_price() == 25.96
+        assert math.isclose(receipt.total_price(), 25.96, rel_tol=1e-9)
 
     def test_five_for_y_discount_with_four(self):
         self.the_cart.add_item_quantity(self.apples, 4)
         self.teller.add_special_offer(OfferType.FIVE_FOR_AMOUNT, self.apples, 6.99)
         receipt = self.teller.checks_out_articles_from(self.the_cart)
-        assert receipt.total_price() == 7.96
+        assert math.isclose(receipt.total_price(), 7.96, rel_tol=1e-9)
 
 
 class TestReceiptPrinter:
