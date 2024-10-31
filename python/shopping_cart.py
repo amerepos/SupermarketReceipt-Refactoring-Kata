@@ -1,7 +1,7 @@
 from typing import Dict
 
-from discount_calculator import DiscountCalculator
 from catalog import SupermarketCatalog
+from discount_calculator import DiscountCalculator
 from model_objects import ProductQuantity, Product, Offer
 from receipt import Receipt
 
@@ -84,17 +84,20 @@ class ShoppingCart:
             if product not in offers:
                 continue  # Skip if the product is not in offers
 
-            # Get the offer for the product
-            offer = offers[product]
-            # Get the unit price of the product from the catalog
-            unit_price = catalog.unit_price(product)
-
-            # Create a discount calculator and calculate the discount
-            discount_calculator = DiscountCalculator(
-                product, quantity, unit_price, offer
-            )
-            discount = discount_calculator.calculate_discount()
-
             # Add the discount to the receipt if it exists
+            discount = self._calculate_discount_for_product(product, quantity, offers, catalog)
             if discount:
                 receipt.add_discount(discount)
+
+    def _calculate_discount_for_product(self, product, quantity, offers, catalog):
+
+        # Get the offer for the product
+        offer = offers[product]
+        # Get the unit price of the product from the catalog
+        unit_price = catalog.unit_price(product)
+
+        # Create a discount calculator and calculate the discount
+        discount_calculator = DiscountCalculator(
+            product, quantity, unit_price, offer
+        )
+        return discount_calculator.calculate_discount()
